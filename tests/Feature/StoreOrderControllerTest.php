@@ -60,7 +60,7 @@ class StoreOrderControllerTest extends TestCase
         ], ['Accept' => 'application/json']);
 
         $response->assertStatus(422)->assertExactJson([
-            'message' => 'The selected products.0.product_id is invalid.',
+            'message' => 'The selected product is invalid.',
             'order_id' => null
         ]);
     }

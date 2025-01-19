@@ -22,18 +22,16 @@ class StoreOrderRequest extends FormRequest
         ];
     }
 
-    /**
-     * We override failedValidation so that our tests pass 
-     * with the exact JSON structure:
-     *
-     * {
-     *   "message": "The selected products.0.product_id is invalid.",
-     *   "order_id": null
-     * }
-     */
+    public function messages()
+    {
+        return [
+            'products.*.product_id.exists' => 'The selected product is invalid.',
+            'products.*.quantity.min'      => 'The quantity must be at least 1.',
+        ];
+    }
+
     protected function failedValidation(Validator $validator)
     {
-        // Just grab the first error message
         $errorMessage = $validator->errors()->first();
 
         throw new HttpResponseException(

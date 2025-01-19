@@ -13,9 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('ingrediant_notification_logs', function (Blueprint $table) {
+        Schema::create('ingredient_notification_logs', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('ingrediant_id')->unsigned()->nullable();
+            $table->bigInteger('ingredient_id')->unsigned()->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('ingrediant_notification_logs');
+        Schema::dropIfExists('ingredient_notification_logs');
     }
 };

@@ -29,7 +29,7 @@ class LowStockNotification extends Notification implements ShouldQueue
         return (new MailMessage)
                     ->line('Refill the ingredient stock for '.$this->ingredient->name.'.')
                     ->action('Refill', url('/'))
-                    ->line('Thank you for using our application!');
+                    ->line('Thank you application!');
     }
 
     public function toArray($notifiable)

@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\DB;
 
 class StoreOrderService
 {
+    public function __construct(private Order $order)
+    {
+    }
+
     /**
      * Create an order and attach products.
      * 
@@ -16,7 +20,7 @@ class StoreOrderService
     public function createOrder(array $data): int
     {
         return DB::transaction(function () use ($data) {
-            $order = Order::create();
+            $order = $this->order->create();
 
             foreach ($data['products'] as $product) {
                 $order->products()->attach($product['product_id'], [

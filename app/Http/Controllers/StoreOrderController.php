@@ -20,19 +20,17 @@ class StoreOrderController extends Controller
     {
         try {
             $validatedData = $request->validated();
-
             $orderId = $storeOrderService->createOrder($validatedData);
-
-        } catch (\Throwable $th) {
+        
             return response()->json([
-                'message'  => $th->getMessage(),
+                'message'  => 'Order created successfully',
+                'order_id' => $orderId,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message'  => 'An error occurred while processing your request.',
                 'order_id' => null,
-            ], 422);
+            ], 500);
         }
-
-        return response()->json([
-            'message'  => 'Order created successfully',
-            'order_id' => $orderId,
-        ], 200);
     }
 }

@@ -3,22 +3,57 @@
 namespace Tests\Unit\Observers;
 
 use App\Models\Ingredient;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductOrder;
-use App\Models\User;
 use App\Observers\ProductOrderObserver;
+use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Mockery;
 use Tests\TestCase;
 
 class ProductOrderObserverTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * Test that the observer throws an exception when stock is insufficient.
-     */
+    private StockService $stockService;
+    private ProductOrderObserver $observer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->stockService = Mockery::mock(StockService::class);
+
+        $this->observer = new ProductOrderObserver($this->stockService);
+    }
+
+    public function test_it_updates_stock_correctly()
+    {
+        $product = Product::factory()->hasAttached(
+            Ingredient::factory()->count(1),
+            ['ingredient_amount' => 5]
+        )->create();
+
+        $productOrder = ProductOrder::factory()->create([
+            'product_id' => $product->id,
+            'quantity'   => 2,
+        ]);
+
+        $this->stockService
+            ->shouldReceive('deductStockForOrder')
+            ->with($productOrder)
+            ->once();
+
+        $this->stockService
+            ->shouldReceive('checkAndNotifyLowStock')
+            ->with($productOrder)
+            ->once();
+
+        $this->observer->created($productOrder);
+    }
+
     public function test_it_throws_exception_when_stock_is_insufficient()
     {
         $product = Product::factory()->hasAttached(
@@ -26,76 +61,47 @@ class ProductOrderObserverTest extends TestCase
             ['ingredient_amount' => 5]
         )->create();
 
-        $ingredient = $product->ingredients->first();
-        $ingredient->update(['current_stock_amount' => 10]);
-
-        $productOrder = ProductOrder::factory()->make([
+        $productOrder = ProductOrder::factory()->create([
             'product_id' => $product->id,
-            'quantity' => 3,
+            'quantity'   => 3,
         ]);
 
-        $observer = new ProductOrderObserver();
+        $exception = ValidationException::withMessages([
+            'quantity' => 'Not enough stock for the ingredient.',
+        ]);
+
+        $this->stockService
+            ->shouldReceive('deductStockForOrder')
+            ->with($productOrder)
+            ->andThrow($exception);
 
         $this->expectException(ValidationException::class);
-        $observer->created($productOrder);
+
+        $this->observer->created($productOrder);
     }
 
-    /**
-     * Test that the observer updates ingredient stock correctly.
-     */
-    public function test_it_updates_stock_correctly()
-    {
-        User::factory()->create();
-
-        $product = Product::factory()->hasAttached(
-            Ingredient::factory()->count(1),
-            ['ingredient_amount' => 5]
-        )->create();
-
-        $ingredient = $product->ingredients->first();
-        $ingredient->update(['current_stock_amount' => 50]);
-
-        $productOrder = ProductOrder::factory()->make([
-            // 'order_id' => optional(Order::factory()->create()->id),
-            'product_id' => $product->id,
-            'quantity'   => 2,
-        ]);
-
-        $observer = new ProductOrderObserver();
-        $observer->created($productOrder);
-
-        $this->assertDatabaseHas('ingredients', [
-            'id' => $ingredient->id,
-            'current_stock_amount' => 40, // 50 - (2*5)
-        ]);
-    }
-
-    /**
-     * Test that the observer logs and notifies when stock is low.
-     */
     public function test_it_logs_and_notifies_on_low_stock()
     {
-        User::factory()->create();
-
         $product = Product::factory()->hasAttached(
             Ingredient::factory()->count(1),
             ['ingredient_amount' => 5]
         )->create();
 
-        $ingredient = $product->ingredients->first();
-        $ingredient->update(['current_stock_amount' => 20, 'stock_capacity' => 50]);
-
-        $productOrder = ProductOrder::factory()->make([
+        $productOrder = ProductOrder::factory()->create([
             'product_id' => $product->id,
             'quantity'   => 2,
         ]);
 
-        $observer = new ProductOrderObserver();
-        $observer->created($productOrder);
+        $this->stockService
+            ->shouldReceive('deductStockForOrder')
+            ->with($productOrder)
+            ->once();
 
-        $this->assertDatabaseHas('ingrediant_notification_logs', [
-            'ingrediant_id' => $ingredient->id,
-        ]);
-        
+        $this->stockService
+            ->shouldReceive('checkAndNotifyLowStock')
+            ->with($productOrder)
+            ->once();
+
+        $this->observer->created($productOrder);
     }
 }

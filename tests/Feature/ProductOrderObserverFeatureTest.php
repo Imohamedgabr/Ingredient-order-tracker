@@ -3,8 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Ingredient;
-use App\Models\IngrediantNotificationLog;
-use App\Models\Order;         // <-- ADD THIS
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductOrder;
 use App\Models\User;
@@ -18,6 +17,11 @@ class ProductOrderObserverFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Test that stock is updated when an order is created.
+     *
+     * @return void
+     */
     public function test_it_updates_stock_when_order_is_created()
     {
         User::factory()->create();
@@ -44,6 +48,11 @@ class ProductOrderObserverFeatureTest extends TestCase
         ]);
     }
 
+    /**
+     * Test that a validation exception is thrown for insufficient stock.
+     *
+     * @return void
+     */
     public function test_it_throws_validation_exception_for_insufficient_stock()
     {
         $this->expectException(ValidationException::class);
@@ -67,6 +76,11 @@ class ProductOrderObserverFeatureTest extends TestCase
         ]);
     }
 
+    /**
+     * Test that a low stock notification is sent and logged when stock falls below 50%.
+     *
+     * @return void
+     */
     public function test_it_logs_and_notifies_on_low_stock()
     {
         Notification::fake();
@@ -79,7 +93,10 @@ class ProductOrderObserverFeatureTest extends TestCase
         )->create();
 
         $ingredient = $product->ingredients->first();
-        $ingredient->update(['current_stock_amount' => 20, 'stock_capacity' => 50]);
+        $ingredient->update([
+            'current_stock_amount' => 20,
+            'stock_capacity' => 50,
+        ]);
 
         $order = Order::factory()->create();
 
@@ -89,10 +106,13 @@ class ProductOrderObserverFeatureTest extends TestCase
             'quantity'   => 2,
         ]);
 
-        Notification::assertSentTo(User::first(), LowStockNotification::class);
+        Notification::assertSentTo(
+            User::first(),
+            LowStockNotification::class
+        );
 
-        $this->assertDatabaseHas('ingrediant_notification_logs', [
-            'ingrediant_id' => $ingredient->id,
+        $this->assertDatabaseHas('ingredient_notification_logs', [
+            'ingredient_id' => $ingredient->id,
         ]);
     }
 }
