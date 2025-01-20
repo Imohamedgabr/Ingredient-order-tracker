@@ -124,29 +124,35 @@ If you are not using Laravel Sail, you can run the tests directly:
 
 ### **Test Results**
 ```
-Tests\Unit\Observers\ProductOrderObserverTest
+ Tests\Unit\Observers\ProductOrderObserverTest
   ✓ it updates stock correctly
   ✓ it throws exception when stock is insufficient
   ✓ it logs and notifies on low stock
 
-Tests\Unit\Services\StockServiceTest
+   Tests\Unit\Services\StockServiceTest
   ✓ deduct stock for order
-  ✓ low stock notification
+  ✓ deduct stock for order throws exception if stock insufficient
+  ✓ no notification when stock is exactly 50 percent
+  ✓ deduct stock for order with multiple ingredients
+  ✓ deduct stock for order with zero stock throws exception
+  ✓ deduct stock for order with no ingredients
 
-Tests\Unit\Services\StoreOrderServiceTest
+   Tests\Unit\Services\StoreOrderServiceTest
   ✓ it creates an order and attaches products
 
-Tests\Feature\OrderTest
+   Tests\Feature\OrderTest
   ✓ order creation updates stock
 
-Tests\Feature\ProductOrderObserverFeatureTest
+   Tests\Feature\ProductOrderObserverFeatureTest
   ✓ it updates stock when order is created
   ✓ it throws validation exception for insufficient stock
   ✓ it logs and notifies on low stock
 
-Tests\Feature\StoreOrderControllerTest
+   Tests\Feature\StoreOrderControllerTest
   ✓ user can store an order
   ✓ user cant use fake product id
+
+  Tests:  16 passed
 ```
 
 ### **Feature Tests**
