@@ -19,7 +19,7 @@ class StockService
      *
      * @throws ValidationException
      */
-    public function deductStockForOrder(ProductOrder $productOrder): void
+    public function deductStockForOrder(ProductOrder $productOrder)
     {
         DB::transaction(function () use ($productOrder) {
             $productOrder->product->ingredients->each(function ($ingredient) use ($productOrder) {
